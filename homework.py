@@ -52,8 +52,8 @@ class CaloriesCalculator(Calculator):
 
 
 class CashCalculator(Calculator):
-    USD_RATE = 71.00
-    EURO_RATE = 83.00
+    USD_RATE = 70.00
+    EURO_RATE = 80.00
     RUB_RATE = 1.00
 
     def get_today_cash_remained(self, currency):
@@ -64,10 +64,10 @@ class CashCalculator(Calculator):
         cash = self.day_reminder()
         if cash == 0:
             return 'Денег нет, держись'
-        currency_name, rate = CURRUNCIES[currency]
+        cash_variable, rate = CURRUNCIES[currency]
         cash = round(cash / rate, 2)
         if cash > 0:
-            return f'На сегодня осталось {cash} {currency_name}'
+            return f'На сегодня осталось {cash} {cash_variable}'
         else:
             cash = abs(cash)
-            return f'Денег нет, держись: твой долг - {cash} {currency_name}'
+            return f'Денег нет, держись: твой долг - {cash} {cash_variable}'
