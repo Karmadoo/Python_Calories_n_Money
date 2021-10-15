@@ -2,72 +2,69 @@ import datetime as dt
 
 
 class Calculator:
+    TIME_DIFFERENCE = dt.timedelta(days=7)
+
     def __init__(self, limit):
         self.limit = limit
         self.records = []
 
     def add_record(self, new_rec):
-        self.new_rec = new_rec
         self.records.append(new_rec)
 
     def get_today_stats(self):
-        sp_td = 0
-        for i in self.records:
-            if i.date == dt.date.today():
-                sp_td += i.amount
-        return sp_td
+        return sum(i.amount for i in self.records if i.date == dt.date.today())
 
     def get_week_stats(self):
-        current = dt.datetime.now().date()
-        differ = dt.timedelta(days=7)
-        sp_wk = 0
-        for i in self.records:
-            if current - differ < i.date <= current:
-                sp_wk += i.amount
-        return sp_wk
-
-    def day_reminder(self):
-        d_reminder = self.limit - self.get_today_stats()
-        return d_reminder
+        current = dt.date.today()
+        current_delta = current - Calculator.TIME_DIFFERENCE
+        return sum(i.amount for i in self.records
+                   if current_delta < i.date <= current)
 
 
 class Record:
+    CURRENT_DATE = '%d.%m.%Y'
+
     def __init__(self, amount, comment, date=None):
         self.amount = amount
         self.comment = comment
         if date is None:
             self.date = dt.date.today()
         else:
-            self.date = dt.datetime.strptime(date, '%d.%m.%Y').date()
+            self.date = dt.datetime.strptime(date, Record.CURRENT_DATE).date()
 
 
 class CaloriesCalculator(Calculator):
+    STOP_PHRASE = 'Хватит есть!'
+
     def get_calories_remained(self):
-        calories = self.day_reminder()
+        calories = self.limit - self.get_today_stats()
         if calories <= 0:
-            return 'Хватит есть!'
-        else:
-            return (f'Сегодня можно съесть что-нибудь ещё, '
-                    f'но с общей калорийностью не более {calories} кКал')
+            return CaloriesCalculator.STOP_PHRASE
+        return (f'Сегодня можно съесть что-нибудь ещё, '
+                f'но с общей калорийностью не более {calories} кКал')
 
 
 class CashCalculator(Calculator):
-    USD_RATE = 70.00
-    EURO_RATE = 80.00
+    STOP_PHRASE = 'Денег нет, держись'
+    ALOWED_PHRASE = ('На сегодня осталось {key1} {key2}')
+    DUTY_PHRASE = ('Денег нет, держись: твой долг - {key1} {key2}')
+    USD_RATE = 60.00
+    EURO_RATE = 70.00
     RUB_RATE = 1.00
+    CURRUNCIES = {'rub': ('руб', RUB_RATE),
+                  'eur': ('Euro', EURO_RATE),
+                  'usd': ('USD', USD_RATE)}
 
     def get_today_cash_remained(self, currency):
-        CURRUNCIES = {'rub': ('руб', self.RUB_RATE),
-                      'eur': ('Euro', self.EURO_RATE),
-                      'usd': ('USD', self.USD_RATE)}
-        self.currency = currency
-        cash = self.day_reminder()
+        cash = self.limit - self.get_today_stats()
         if cash == 0:
-            return 'Денег нет, держись'
-        cash_variable, rate = CURRUNCIES[currency]
+            return CashCalculator.STOP_PHRASE
+        if currency not in CashCalculator.CURRUNCIES.keys():
+            raise ValueError('Введите значение rub, eur или usd')
+        cash_variable, rate = CashCalculator.CURRUNCIES[currency]
         cash = round(cash / rate, 2)
         if cash > 0:
-            return f'На сегодня осталось {cash} {cash_variable}'
-        else:
-            cash = abs(cash)
-            return f'Денег нет, держись: твой долг - {cash} {cash_variable}'
+            return CashCalculator.ALOWED_PHRASE.format(key1=cash,
+                                                       key2=cash_variable)
+        return CashCalculator.DUTY_PHRASE.format(key1=abs(cash),
+                                                 key2=cash_variable)
