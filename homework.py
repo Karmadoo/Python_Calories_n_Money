@@ -2,7 +2,7 @@ import datetime as dt
 
 
 class Calculator:
-    TIME_DELTA = dt.timedelta(days=7)
+    WEEK = dt.timedelta(days=7)
 
     def __init__(self, limit):
         self.limit = limit
@@ -18,13 +18,13 @@ class Calculator:
 
     def get_week_stats(self):
         current = dt.date.today()
-        current_delta = current - self.TIME_DELTA
+        current_delta = current - self.WEEK
         return sum(record.amount for record in self.records
                    if current_delta < record.date <= current)
 
 
 class Record:
-    DATE_TOODAY = '%d.%m.%Y'
+    DATE_FORMAT = '%d.%m.%Y'
 
     def __init__(self, amount, comment, date=None):
         self.amount = amount
@@ -32,7 +32,7 @@ class Record:
         if date is None:
             self.date = dt.date.today()
         else:
-            self.date = dt.datetime.strptime(date, self.DATE_TOODAY).date()
+            self.date = dt.datetime.strptime(date, self.DATE_FORMAT).date()
 
 
 class CaloriesCalculator(Calculator):
@@ -51,7 +51,7 @@ class CashCalculator(Calculator):
     STOP = 'Денег нет, держись'
     ALOWED = 'На сегодня осталось {number} {currency}'
     DUTY = 'Денег нет, держись: твой долг - {number} {currency}'
-    ERROR = 'Ошибка. Значение валюты должно быть поддерживаемым'
+    ERROR = 'Ошибка. Введенный параметр {wrong} не поддерживается.'
     USD_RATE = 60.00
     EURO_RATE = 70.00
     RUB_RATE = 1.00
@@ -60,15 +60,15 @@ class CashCalculator(Calculator):
                   'usd': ('USD', USD_RATE)}
 
     def get_today_cash_remained(self, currency):
-        cash = self.limit - self.get_today_stats()
         if currency not in self.CURRUNCIES:
-            raise ValueError(self.ERROR)
+            raise ValueError(self.ERROR.format(wrong=currency))
+        cash = self.limit - self.get_today_stats()
         if cash == 0:
             return self.STOP
-        cash_variable, rate = self.CURRUNCIES[currency]
+        name, rate = self.CURRUNCIES[currency]
         cash = round(cash / rate, 2)
         if cash > 0:
             return self.ALOWED.format(number=cash,
-                                      currency=cash_variable)
+                                      currency=name)
         return self.DUTY.format(number=abs(cash),
-                                currency=cash_variable)
+                                currency=name)
