@@ -1,2 +1,3 @@
-# hw_python_oop
-Sprint 2. Итоговый проект.
+### Learning Python
+Calories and Money calc 
+Backend
